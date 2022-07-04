@@ -3,10 +3,12 @@ module github.com/sdrobov/goodmorningbot
 go 1.18
 
 require (
+	github.com/briandowns/openweathermap v0.18.0
 	github.com/gotd/td v0.60.0
-	github.com/iArmann/cataas-API-go v0.9.0
 	github.com/ivanglie/go-cbr-client v1.0.2
 	github.com/jessevdk/go-flags v1.5.0
+	github.com/pkg/errors v0.9.1
+	github.com/robfig/cron/v3 v3.0.1
 )
 
 require (
