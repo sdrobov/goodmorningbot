@@ -33,3 +33,5 @@ require (
 	nhooyr.io/websocket v1.8.7 // indirect
 	rsc.io/qr v0.2.0 // indirect
 )
+
+replace nhooyr.io/websocket v1.8.7 => github.com/sdrobov/nhooyr.io_websocket v1.8.8
