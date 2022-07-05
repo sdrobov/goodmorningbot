@@ -26,3 +26,9 @@
 
 Очень просто: создайте новый модуль в internal/addons и в нем реализуйте интерфейс UselessAddon. Конструктор добавьте в
 main.go в массив uselessAddons. Порядок следования элементов в массиве важен!
+
+## Запуск с помощью докера
+
+```shell
+docker run --rm -it --env-file=./.env sdrobov/goodmorningbot
+```
