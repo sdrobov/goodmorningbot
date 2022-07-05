@@ -1,4 +1,4 @@
-# Good Morning Bot
+# [![Build](https://github.com/sdrobov/goodmorningbot/actions/workflows/docker-image.yml/badge.svg)](https://github.com/sdrobov/goodmorningbot/actions/workflows/docker-image.yml) Good Morning Bot
 
 Бот, который не забудет пожелать "Доброе утро" коллегам и друзьям, а так же поднимет настроение
 в начале дня картинкой с котиком
