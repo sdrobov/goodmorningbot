@@ -2,3 +2,4 @@
 /goodmorningbot
 /vendor
 /.env
+/session.json

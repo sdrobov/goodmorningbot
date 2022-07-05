@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/gotd/td/session"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/auth"
 	"github.com/gotd/td/telegram/message"
@@ -34,6 +35,7 @@ type config struct {
 	Schedule     string `long:"schedule" description:"Cron-format schedule" env:"SCHEDULE" required:"true"`
 	BaseGreeting string `long:"base-greeting" description:"Base greeting" env:"BASE_GREETING" required:"true"`
 	Cataas       string `long:"cataas-endpoint" description:"cataas.com endpoint" env:"CATAAS_ENDPOINT" required:"true"`
+	SessionFile  string `long:"session-file" description:"File to store tg session" env:"SESSION_FILE"`
 
 	FuckingGreatAdviceEndpoint string  `long:"fga-endpoint" description:"fucking-great-advice.ru API endpoint" env:"FGA_ENDPOINT"`
 	IsDayOffEndpoint           string  `long:"ido-endpoint" description:"isdayoff.ru API endpoint" env:"IDO_ENDPOINT"`
@@ -85,7 +87,18 @@ func main() {
 		auth.SendCodeOptions{},
 	)
 
-	client := telegram.NewClient(cfg.AppID, cfg.AppHash, telegram.Options{})
+	opts := telegram.Options{}
+	if cfg.SessionFile != "" {
+		opts.SessionStorage = &session.FileStorage{
+			Path: cfg.SessionFile,
+		}
+	}
+
+	client := telegram.NewClient(
+		cfg.AppID,
+		cfg.AppHash,
+		opts,
+	)
 
 	if err := client.Run(ctx, func(ctx context.Context) error {
 		if err := client.Auth().IfNecessary(ctx, flow); err != nil {
