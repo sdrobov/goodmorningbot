@@ -18,8 +18,8 @@ jobs:
 
       - name: Build
         run: |
-          docker build -t sdrobov/goodmorningbot:aarch64 --platform=linux/aarch64 .
-          docker build -t sdrobov/goodmorningbot:amd64 --platform=linux/amd64 .
+          docker buildx build -t sdrobov/goodmorningbot:aarch64 --platform=linux/aarch64 .
+          docker buildx build -t sdrobov/goodmorningbot:amd64 --platform=linux/amd64 .
 
       - name: Push
         run: |

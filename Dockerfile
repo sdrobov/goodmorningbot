@@ -1,4 +1,4 @@
-FROM golang:1.18-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.18-alpine AS builder
 
 ARG CGO_ENABLED=0
 
@@ -12,7 +12,7 @@ COPY ./cmd ./cmd
 COPY ./internal ./internal
 RUN go build -v ./cmd/goodmorningbot
 
-FROM alpine:latest
+FROM --platform=$BUILDPLATFORM alpine:latest
 
 WORKDIR /app
 
