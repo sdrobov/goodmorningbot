@@ -111,11 +111,17 @@ func main() {
 		chatId, err := strconv.ParseInt(cfg.ChatId, 10, 64)
 		if err == nil {
 			m := new(peers.Options).Build(client.API())
-			c, err := m.ResolveChatID(ctx, chatId)
+			ct, err := m.ResolveChatID(ctx, chatId)
 			if err != nil {
-				log.Fatalf("can't resolve chat id %d: %v", chatId, err)
+				cl, err := m.ResolveChannelID(ctx, chatId)
+				if err != nil {
+					log.Fatalf("can't resolve chat/channel id %d: %v", chatId, err)
+				}
+
+				builder = s.To(cl.InputPeer())
+			} else {
+				builder = s.To(ct.InputPeer())
 			}
-			builder = s.To(c.InputPeer())
 		} else {
 			builder = s.Resolve(cfg.ChatId)
 		}
