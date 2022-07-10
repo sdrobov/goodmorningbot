@@ -9,6 +9,7 @@ import (
 	"github.com/gotd/td/telegram/auth"
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/telegram/message/html"
+	"github.com/gotd/td/telegram/peers"
 	"github.com/gotd/td/tg"
 	"github.com/jessevdk/go-flags"
 	"github.com/pkg/errors"
@@ -105,7 +106,21 @@ func main() {
 			return errors.Wrap(err, "error authenticating in telegram")
 		}
 
-		_, err := cr.AddFunc(cfg.Schedule, func() {
+		s := message.NewSender(client.API())
+		var builder *message.RequestBuilder
+		chatId, err := strconv.ParseInt(cfg.ChatId, 10, 64)
+		if err == nil {
+			m := new(peers.Options).Build(client.API())
+			c, err := m.ResolveChatID(ctx, chatId)
+			if err != nil {
+				log.Fatalf("can't resolve chat id %d: %v", chatId, err)
+			}
+			builder = s.To(c.InputPeer())
+		} else {
+			builder = s.Resolve(cfg.ChatId)
+		}
+
+		_, err = cr.AddFunc(cfg.Schedule, func() {
 			msg := cfg.BaseGreeting
 			for _, addon := range uselessAddons {
 				newMsg, err := addon.GetMessage(msg)
@@ -118,13 +133,12 @@ func main() {
 				}
 			}
 
-			s := message.NewSender(client.API())
 			doc := message.PhotoExternal(
 				cfg.Cataas+`&rand=`+strconv.FormatInt(time.Now().UnixMicro(), 10),
 				html.String(nil, msg),
 			)
-			target := s.Resolve(cfg.ChatId)
-			if _, err := target.Media(ctx, doc); err != nil {
+
+			if _, err := builder.Media(ctx, doc); err != nil {
 				log.Fatalf("send error: %v", err)
 			}
 		})
