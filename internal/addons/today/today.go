@@ -2,18 +2,19 @@ package today
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 	"io"
-	"log"
 	"net/http"
 	"time"
 )
 
 type Today struct {
 	isDayOffEndpoint string
+	log              *zap.SugaredLogger
 }
 
-func NewToday(isDayOffEndpoint string) *Today {
-	return &Today{isDayOffEndpoint: isDayOffEndpoint}
+func NewToday(isDayOffEndpoint string, log *zap.SugaredLogger) *Today {
+	return &Today{isDayOffEndpoint: isDayOffEndpoint, log: log}
 }
 
 func (t *Today) Name() string {
@@ -26,20 +27,21 @@ func (t *Today) GetMessage(oldMessage string) (string, error) {
 		httpClient := http.Client{Timeout: 2 * time.Second}
 		resp, err := httpClient.Get(t.isDayOffEndpoint)
 		if err != nil {
-			log.Fatalf("error fetching if it is day off: %v", err)
+			t.log.Errorw("error fetching if it is day off", zap.Error(err))
+		} else {
+			defer func(body io.ReadCloser) {
+				_ = body.Close()
+			}(resp.Body)
+
+			idoResult, err := io.ReadAll(resp.Body)
+			if err != nil {
+				t.log.Errorw("error reading response if it is day off", zap.Error(err))
+			} else {
+				isDayOff = string(idoResult) == "1"
+			}
 		}
-
-		defer func(Body io.ReadCloser) {
-			_ = Body.Close()
-		}(resp.Body)
-
-		idoResult, err := io.ReadAll(resp.Body)
-		if err != nil {
-			log.Fatalf("error reading response if it is day off: %v", err)
-		}
-
-		isDayOff = string(idoResult) == "1"
 	}
+
 	isDayOffMsg := "это рабочий день"
 	if isDayOff {
 		isDayOffMsg = "это не рабочий день"

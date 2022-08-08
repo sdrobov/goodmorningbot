@@ -19,7 +19,7 @@ import (
 	"github.com/sdrobov/goodmorningbot/internal/addons/fuckinggreatadvice"
 	"github.com/sdrobov/goodmorningbot/internal/addons/today"
 	"github.com/sdrobov/goodmorningbot/internal/addons/weather"
-	"log"
+	"go.uber.org/zap"
 	"os"
 	"os/signal"
 	"strconv"
@@ -57,11 +57,15 @@ func (p codePrompt) Code(_ context.Context, _ *tg.AuthSentCode) (string, error) 
 }
 
 func main() {
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
+	log := logger.Sugar()
+
 	var cfg config
 	parser := flags.NewParser(&cfg, flags.Default)
 	_, err := parser.Parse()
 	if err != nil {
-		log.Fatalf("failed to parse config: %v", err)
+		log.Fatalw("failed to parse config", zap.Error(err))
 	}
 
 	cr := cron.New()
@@ -69,12 +73,12 @@ func main() {
 	defer cancelFunc()
 	go func() {
 		<-ctx.Done()
-		log.Default().Print("received exit signal! Initialize graceful shutdown")
+		log.Info("received exit signal! Initialize graceful shutdown")
 		cr.Stop()
 	}()
 
 	uselessAddons := []internal.UselessAddon{
-		today.NewToday(cfg.IsDayOffEndpoint),
+		today.NewToday(cfg.IsDayOffEndpoint, log),
 		fuckinggreatadvice.NewFuckingGreatAdvice(cfg.FuckingGreatAdviceEndpoint),
 		weather.NewWeather(cfg.OpenWeatherMapApiKey, cfg.OpenWeatherMapLatitude, cfg.OpenWeatherMapLongitude),
 		cbrf.NewUsdRate(),
@@ -115,7 +119,7 @@ func main() {
 			if err != nil {
 				cl, err := m.ResolveChannelID(ctx, chatId)
 				if err != nil {
-					log.Fatalf("can't resolve chat/channel id %d: %v", chatId, err)
+					log.Fatalw("can't resolve chat/channel id", zap.Int64("chat_id", chatId), zap.Error(err))
 				}
 
 				builder = s.To(cl.InputPeer())
@@ -131,9 +135,9 @@ func main() {
 			for _, addon := range uselessAddons {
 				newMsg, err := addon.GetMessage(msg)
 				if err != nil {
-					log.Default().Printf("error running addon %s: %v", addon.Name(), err)
+					log.Errorw("error running addon", zap.String("addon_name", addon.Name()), zap.Error(err))
 				} else if newMsg == "" {
-					log.Default().Printf("addon %s returned empty string", addon.Name())
+					log.Errorw("addon returned empty string", zap.String("addon_name", addon.Name()))
 				} else {
 					msg = newMsg
 				}
@@ -145,7 +149,7 @@ func main() {
 			)
 
 			if _, err := builder.Media(ctx, doc); err != nil {
-				log.Fatalf("send error: %v", err)
+				log.Fatalw("send error", zap.Error(err))
 			}
 		})
 		if err != nil {
